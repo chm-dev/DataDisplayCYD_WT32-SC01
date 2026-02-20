@@ -521,10 +521,11 @@ const char* ntpServer = "pool.ntp.org";
 long gmtOffset_sec = 3600;
 int daylightOffset_sec = 0;
 
-// Clock position adjusted for WT32-SC01 (480x320 landscape)
-const int clockX = 230;   // Center X for 480 width
-const int clockY = 85;   // Center Y for 320 height  
-const int radius = 67;    // Larger radius for bigger screen (was 67)
+// Clock position scaled for WT32-SC01 (480x320 landscape) from original 320x240 design
+// Scale factors: X=1.5 (480/320), Y=1.333 (320/240)
+const int clockX = 345;   // Center X: 230*1.5=345
+const int clockY = 113;   // Center Y: 85*(4/3)=113
+const int radius = 89;    // Radius: 67*(4/3)=89
 int lastHour = -1, lastMin = -1, lastSec = -1, lastDay = -1;
 int brightness = 255;
 String cityName = "Plzen";
@@ -786,20 +787,20 @@ uint16_t getSecHandColor() {
 void drawWifiIndicator() {
   int wifiStatus = WiFi.status();
   uint16_t color = wifiStatus == WL_CONNECTED ? TFT_GREEN : TFT_RED;
-  tft.fillCircle(300, 20, 6, color);
+  tft.fillCircle(450, 27, 8, color);  // scaled: 300*1.5=450, 20*(4/3)=27, r:6*(4/3)=8
 }
 
 // Ikona dostupné aktualizace (zelená šipka vedle WiFi)
 void drawUpdateIndicator() {
   if (!updateAvailable) return;
   
-  int iconX = 310;  // Vedle WiFi ikony
-  int iconY = 12;
+  int iconX = 465;  // Vedle WiFi ikony – scaled: 310*1.5=465
+  int iconY = 16;    // scaled: 12*(4/3)=16
   
-  // Zelená šipka dolů (download symbol)
-  tft.fillTriangle(iconX, iconY + 8, iconX + 4, iconY, iconX + 8, iconY + 8, TFT_GREEN);
-  tft.fillRect(iconX + 2, iconY + 8, 4, 6, TFT_GREEN);
-  tft.fillRect(iconX, iconY + 14, 8, 2, TFT_GREEN);
+  // Zelená šipka dolů (download symbol) – all offsets scaled 1.5x
+  tft.fillTriangle(iconX, iconY + 12, iconX + 6, iconY, iconX + 12, iconY + 12, TFT_GREEN);
+  tft.fillRect(iconX + 3, iconY + 12, 6, 9, TFT_GREEN);
+  tft.fillRect(iconX, iconY + 21, 12, 3, TFT_GREEN);
 }
 
 void loadRecentCities() {
@@ -1184,8 +1185,8 @@ bool isTouchInMenuItem(int y, int itemIndex) {
 }
 
 void drawSettingsIcon(uint16_t color) {
-  int ix = 300, iy = 220;
-  int rIn = 3, rMid = 6, rOut = 8;
+  int ix = 450, iy = 293;  // scaled: 300*1.5=450, 220*(4/3)=293
+  int rIn = 4, rMid = 8, rOut = 11;  // scaled: 3*(4/3)=4, 6*(4/3)=8, 8*(4/3)=11
   tft.fillCircle(ix, iy, rMid, color);
   tft.fillCircle(ix, iy, rIn, getBgColor());
   #define DEGTORAD (PI / 180.0)
@@ -2231,8 +2232,8 @@ void drawClockStatic()
   // Vykreslení minutových a hodinových index čárek
   for (int i = 0; i < 60; i++) {
     float ang = (i * 6 - 90) * DEGTORAD;
-    // Úprava u menšího ciferníku zkracujeme čárky
-    int r1 = (i % 5 == 0) ? (radius - 10) : (radius - 5);
+    // Scaled tick lengths: offsets scaled by 4/3 from 320x240 design
+    int r1 = (i % 5 == 0) ? (radius - 13) : (radius - 7);  // 10*(4/3)=13, 5*(4/3)=7
     uint16_t color;
     if (i % 5 == 0) {
       color = getTextColor();
@@ -2245,12 +2246,12 @@ void drawClockStatic()
   // Vykreslení čísel 1-12
   tft.setTextColor(getTextColor());
   tft.setTextDatum(MC_DATUM);
-  tft.setFreeFont(&FreeSans9pt7b);
+  tft.setFreeFont(&FreeSans12pt7b);  // scaled up from 9pt: 9*1.333=12pt
 
   for (int h = 1; h <= 12; h++) {
     float angle = (h * 30 - 90) * DEGTORAD;
-    int x = clockX + cos(angle) * (radius - 22);
-    int y = clockY + sin(angle) * (radius - 22);
+    int x = clockX + cos(angle) * (radius - 29);  // scaled: 22*(4/3)=29
+    int y = clockY + sin(angle) * (radius - 29);
     
     tft.drawString(String(h), x, y);
   }
@@ -2276,12 +2277,14 @@ void drawDateAndWeek(const struct tm *ti)
   tft.setTextColor(dateColor, getBgColor());
   tft.setTextDatum(MC_DATUM);
   
-  // OPRAVA: Mazn pouze vpravo od cifernku x > 155, Výka od y160 do y240 (80 pixel)
-  tft.fillRect(155, 160, 165, 80, getBgColor());
+  // Scaled from 320x240: x=155*1.5=232, y=160*(4/3)=213, w=165*1.5=248, h=80*(4/3)=107
+  tft.fillRect(232, 213, 248, 107, getBgColor());
 
   char dateBuf[30];
   strftime(dateBuf, sizeof(dateBuf), "%B %d, %Y", ti);
-  tft.drawString(String(dateBuf), clockX, 175, 2);
+  // Scale text: built-in font 2 at 1.33x gives ~21px characters
+  tft.setTextSize(1.33);
+  tft.drawString(String(dateBuf), clockX, 233, 2);  // 175*(4/3)=233
 
   int weekNum = 0;
   char weekBuf[20];
@@ -2291,7 +2294,8 @@ void drawDateAndWeek(const struct tm *ti)
   const char *dayNames[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
   String dayStr = String(dayNames[ti->tm_wday]);
   String weekStr = "Week " + String(weekNum) + ", " + dayStr;
-  tft.drawString(weekStr, clockX, 193, 2);
+  tft.drawString(weekStr, clockX, 257, 2);  // 193*(4/3)=257
+  tft.setTextSize(1);
 
   if (cityName != "") {
     // YELLOW TÉMA - město tmavě zeleně
@@ -2300,7 +2304,9 @@ void drawDateAndWeek(const struct tm *ti)
     } else {
       tft.setTextColor(TFT_SKYBLUE, getBgColor());
     }
-    tft.drawString(cityName, clockX, 211, 2);
+    tft.setTextSize(1.33);
+    tft.drawString(cityName, clockX, 281, 2);  // 211*(4/3)=281
+    tft.setTextSize(1);
   }
 
   if (namedayValid && todayNameday != "--" && selectedCountry == "Czech Republic") {
@@ -2311,7 +2317,9 @@ void drawDateAndWeek(const struct tm *ti)
       namedayColor = isWhiteTheme ? TFT_DARKGREEN : TFT_ORANGE;
     }
     tft.setTextColor(namedayColor, getBgColor());
-    tft.drawString("Nameday: " + todayNameday, clockX, 227, 1);
+    tft.setTextSize(1.33);
+    tft.drawString("Nameday: " + todayNameday, clockX, 302, 2);  // 227*(4/3)=302, font 1→2
+    tft.setTextSize(1);
   }
 }
 
@@ -2361,7 +2369,7 @@ void drawDigitalClock(int h, int m, int s) {
   }
   
   tft.setTextColor(getSecHandColor(), bgColor);
-  tft.drawString(secStr, clockX, clockY + 45, 4); // Menší font pod časem
+ // tft.drawString(secStr, clockX, clockY + 45, 4); // Menší font pod časem
 }
 
 void updateHands(int h, int m, int s) {
@@ -2384,18 +2392,18 @@ void updateHands(int h, int m, int s) {
     float mO = lastMin * 6 - 90;
     float sO = lastSec * 6 - 90;
 
-    // Kreslení starých ruček barvou pozadí (smazání)
+    // Kreslení starých ruček barvou pozadí (smazání) – hand lengths scaled by 4/3
     tft.drawLine(clockX, clockY,
-                 clockX + cos(hO * DEGTORAD) * (radius - 35),
-                 clockY + sin(hO * DEGTORAD) * (radius - 35),
+                 clockX + cos(hO * DEGTORAD) * (radius - 47),  // 35*(4/3)=47
+                 clockY + sin(hO * DEGTORAD) * (radius - 47),
                  bgColor);
     tft.drawLine(clockX, clockY,
-                 clockX + cos(mO * DEGTORAD) * (radius - 20),
-                 clockY + sin(mO * DEGTORAD) * (radius - 20),
+                 clockX + cos(mO * DEGTORAD) * (radius - 27),  // 20*(4/3)=27
+                 clockY + sin(mO * DEGTORAD) * (radius - 27),
                  bgColor);
     tft.drawLine(clockX, clockY,
-                 clockX + cos(sO * DEGTORAD) * (radius - 14),
-                 clockY + sin(sO * DEGTORAD) * (radius - 14),
+                 clockX + cos(sO * DEGTORAD) * (radius - 19),  // 14*(4/3)=19
+                 clockY + sin(sO * DEGTORAD) * (radius - 19),
                  bgColor);
     // DŮLEŽITÉ: Znovu nakreslit indexy!
     drawClockStatic();
@@ -2409,19 +2417,19 @@ void updateHands(int h, int m, int s) {
   float sA = s * 6 - 90;
 
   tft.drawLine(clockX, clockY,
-               clockX + cos(hA * DEGTORAD) * (radius - 35),
-               clockY + sin(hA * DEGTORAD) * (radius - 35),
+               clockX + cos(hA * DEGTORAD) * (radius - 47),  // 35*(4/3)=47
+               clockY + sin(hA * DEGTORAD) * (radius - 47),
                mainHandColor);
   tft.drawLine(clockX, clockY,
-               clockX + cos(mA * DEGTORAD) * (radius - 20),
-               clockY + sin(mA * DEGTORAD) * (radius - 20),
+               clockX + cos(mA * DEGTORAD) * (radius - 27),  // 20*(4/3)=27
+               clockY + sin(mA * DEGTORAD) * (radius - 27),
                mainHandColor);
   tft.drawLine(clockX, clockY,
-               clockX + cos(sA * DEGTORAD) * (radius - 14),
-               clockY + sin(sA * DEGTORAD) * (radius - 14),
+               clockX + cos(sA * DEGTORAD) * (radius - 19),  // 14*(4/3)=19
+               clockY + sin(sA * DEGTORAD) * (radius - 19),
                secColor);
-  // Středový kroužek
-  tft.fillCircle(clockX, clockY, 3, TFT_LIGHTGREY);
+  // Středový kroužek – scaled: r=3*(4/3)=4
+  tft.fillCircle(clockX, clockY, 4, TFT_LIGHTGREY);
 }
 
 // ============================================
@@ -2675,46 +2683,49 @@ void drawWeatherSection() {
     txtContrast = TFT_BLACK;
   }
 
-  // Vymazání sekce - POUZE počasí, ne hodiny
-  tft.fillRect(0, 0, 155, 95, bg);                 // Horní část
-  tft.fillRect(0, 105, 155, 100, bg);              // Středová část
-  tft.fillRect(0, 206, 155, 34, bg);               // Dolní část
+  // Clear rects scaled: width 155*1.5=232; heights scaled by 4/3
+  tft.fillRect(0, 0, 232, 127, bg);                 // Top: 95*(4/3)=127
+  tft.fillRect(0, 140, 232, 133, bg);              // Mid: y=105*(4/3)=140, h=100*(4/3)=133
+  tft.fillRect(0, 275, 232, 45, bg);               // Bot: y=206*(4/3)=275, h=34*(4/3)=45
 
   if (!initialWeatherFetched) {
     tft.setTextColor(txt, bg);
     tft.setTextDatum(MC_DATUM);
-    tft.drawString("Loading...", 75, 120);
+    tft.drawString("Loading...", 113, 160);  // scaled: 75*1.5=113, 120*(4/3)=160
     return;
   }
 
   // --- 1. SEKCE: Aktuální teplota s ikonou ---
-  drawWeatherIconVector(weatherCode, 5, 15);
+  drawWeatherIconVector(weatherCode, 8, 20);  // scaled: 5*1.5=8, 15*(4/3)=20
   tft.setTextDatum(TL_DATUM);
   tft.setTextColor(txtContrast, bg);
-  tft.setFreeFont(&FreeSansBold18pt7b);
+  tft.setTextSize(1);
+  tft.setFreeFont(&FreeSansBold24pt7b);  // scaled up from 18pt (18*1.333≈24pt)
 
   float dispTemp = weatherUnitF ? (currentTemp * 9.0 / 5.0 + 32) : currentTemp;
   String unit = weatherUnitF ? "F" : "C";
   String tempStr = String((int)dispTemp);
-  tft.drawString(tempStr, 45, 15);
+  tft.drawString(tempStr, 68, 20);  // scaled: 45*1.5=68, 15*(4/3)=20
 
   int tempWidth = tft.textWidth(tempStr);
-  drawDegreeCircle(45 + tempWidth + 5, 20, 3, txtContrast);  // ✅ r=3 - větší kroužek
-  tft.drawString(unit, 45 + tempWidth + 12, 15);
+  drawDegreeCircle(68 + tempWidth + 8, 27, 4, txtContrast);  // offsets scaled: x+5→8, y:20→27, r:3→4
+  tft.drawString(unit, 68 + tempWidth + 18, 20);  // offset scaled: 12*1.5=18
 
-  // Popis počasí: Clear, Cloudy, Rainy, atd.
-  tft.setFreeFont(&FreeSans9pt7b);
+  // Počasí popis: Clear, Cloudy, Rainy, atd.
+  tft.setTextSize(1);
+  tft.setFreeFont(&FreeSans12pt7b);  // scaled up from 9pt (9*1.333≈12pt)
   tft.setTextColor(txt, bg);
-  tft.drawString(getWeatherDesc(weatherCode), 45, 48);
+  tft.drawString(getWeatherDesc(weatherCode), 68, 64);  // scaled: 45*1.5=68, 48*(4/3)=64
 
   // Vlhkost a tlak
   tft.setFreeFont(NULL);
+  tft.setTextSize(1.5);  // scale built-in font 1.5x for all small text below
   tft.setTextColor(txt, bg);
-  tft.setCursor(5, 75);
+  tft.setCursor(8, 100);  // scaled: 5*1.5=8, 75*(4/3)=100
  tft.printf("Hum: %d%% Press: %d hPa", currentHumidity, currentPressure);
 
   // Vítr na dalším řádku
-  tft.setCursor(5, 88);
+  tft.setCursor(8, 117);  // scaled: 5*1.5=8, 88*(4/3)=117
   if (weatherUnitMph) {
   float windMph = currentWindSpeed * 0.621371;
   tft.printf("Wind: %.1f mph %s", windMph, getWindDir(currentWindDirection).c_str());
@@ -2723,34 +2734,37 @@ void drawWeatherSection() {
 }
 
   // --- SUNRISE/SUNSET ---
-  tft.drawBitmap(5, 98, icon_sunrise, 16, 16, TFT_ORANGE);
-  tft.setCursor(24, 102);
+  tft.drawBitmap(8, 130, icon_sunrise, 16, 16, TFT_ORANGE);  // scaled: 5*1.5=8, 98*(4/3)=130
+  tft.setCursor(36, 136);  // scaled: 24*1.5=36, 102*(4/3)=136
   tft.setTextColor(TFT_ORANGE, bg);
   tft.print(sunriseTime);
 
-  tft.drawBitmap(85, 98, icon_sunset, 16, 16, TFT_RED);
-  tft.setCursor(104, 102);
+  tft.drawBitmap(128, 130, icon_sunset, 16, 16, TFT_RED);  // scaled: 85*1.5=128, 98*(4/3)=130
+  tft.setCursor(156, 136);  // scaled: 104*1.5=156, 102*(4/3)=136
   tft.setTextColor(TFT_RED, bg);
   tft.print(sunsetTime);
+  tft.setTextSize(1);  // reset size after small text section
 
-  // ODDLOVACÍ LINKA
+  // SEPARATOR LINE (scaled)
   tft.setTextColor(txt, bg);
-  tft.drawFastHLine(5, 120, 145, TFT_DARKGREY);
+  tft.drawFastHLine(8, 160, 217, TFT_DARKGREY);  // scaled: 5*1.5=8, 120*(4/3)=160, 145*1.5=217
 
   // --- 2. SEKCE: Předpověď s DNEM ---
   tft.setTextColor(txt, bg);
   tft.setFreeFont(NULL);
-  tft.drawString("Forecast:", 5, 128);
+  tft.setTextSize(1.5);  // scale forecast labels 1.5x
+  tft.drawString("Forecast:", 8, 171);  // scaled: 5*1.5=8, 128*(4/3)=171
 
   // ============================================
   // PRVNÍ DEN - VYKRESLENÍ S KROUZKEM JAKO °
   // ============================================
-  drawWeatherIconVectorSmall(forecast[0].code, 8, 138);
+  drawWeatherIconVectorSmall(forecast[0].code, 12, 184);  // scaled: 8*1.5=12, 138*(4/3)=184
   tft.setTextDatum(ML_DATUM);
-  tft.setFreeFont(NULL); 
+  tft.setFreeFont(NULL);
+  tft.setTextSize(1.5);
   tft.setTextColor(txt, bg);
-  int day1x = 70;
-  int day1y = 138;
+  int day1x = 105;  // scaled: 70*1.5=105
+  int day1y = 184;  // scaled: 138*(4/3)=184
   tft.drawString(forecastDay1Name, day1x, day1y);
 
   // ✅ OPRAVA: Vykreslení bez textového °, ale s krouzkem funkcí
@@ -2760,26 +2774,23 @@ void drawWeatherSection() {
   
   // Vykreslení teploty s LOMÍTKEM místo pomlčky
   String tempRangeOnly1 = tempMin1 + "/" + tempMax1;
-  tft.drawString(tempRangeOnly1, day1x, day1y + 13);
+  tft.drawString(tempRangeOnly1, day1x, day1y + 17);  // scaled: 13*(4/3)=17
   
-  // Výpočet pozice pro kroulek (stupень symbol)
   int tempWidth1 = tft.textWidth(tempRangeOnly1);
   int degreeX1 = day1x + tempWidth1 + 3;
-  int degreeY1 = day1y + 8;
+  int degreeY1 = day1y + 11;  // scaled: 8*(4/3)=11
   
-  // Vykreslení malého krouzku jako stupně (r=1)
   drawDegreeCircle(degreeX1, degreeY1, 1, txtContrast);
   
-  // Vykreslení jednotky (C/F) za kruhem
-  tft.drawString(unit, degreeX1 + 4, day1y + 13);
+  tft.drawString(unit, degreeX1 + 5, day1y + 17);  // scaled offsets: +4->+5, +13->+17
 
   // ============================================
   // DRUHÝ DEN - VYKRESLENÍ S KROUZKEM JAKO °
   // ============================================
-  drawWeatherIconVectorSmall(forecast[1].code, 8, 170);
+  drawWeatherIconVectorSmall(forecast[1].code, 12, 227);  // scaled: 8*1.5=12, 170*(4/3)=227
   tft.setTextColor(txt, bg);
-  int day2x = 70;
-  int day2y = 170;
+  int day2x = 105;  // scaled: 70*1.5=105
+  int day2y = 227;  // scaled: 170*(4/3)=227
   tft.drawString(forecastDay2Name, day2x, day2y);
 
   // ✅ OPRAVA: Vykreslení bez textového °, ale s krouzkem funkcí
@@ -2789,19 +2800,19 @@ void drawWeatherSection() {
   
   // Vykreslení teploty s LOMÍTKEM místo pomlčky
   String tempRangeOnly2 = tempMin2 + "/" + tempMax2;
-  tft.drawString(tempRangeOnly2, day2x, day2y + 13);
+  tft.drawString(tempRangeOnly2, day2x, day2y + 17);  // scaled: 13*(4/3)=17
   
-  // Výpočet pozice pro kroulek (stupень symbol)
   int tempWidth2 = tft.textWidth(tempRangeOnly2);
   int degreeX2 = day2x + tempWidth2 + 3;
-  int degreeY2 = day2y + 8;
+  int degreeY2 = day2y + 11;  // scaled: 8*(4/3)=11
   
-  // Vykreslení malého krouzku jako stupně (r=1)
   drawDegreeCircle(degreeX2, degreeY2, 1, txtContrast);
+  tft.drawString(unit, degreeX2 + 5, day2y + 17);  // unit label (was missing in original)
+  tft.setTextSize(1);  // reset after forecast section
   
-// ODDĚLUJÍCÍ LINKA
+// SECOND SEPARATOR LINE (scaled)
   tft.setTextColor(txt, bg);
-  tft.drawFastHLine(5, 200, 145, TFT_DARKGREY);
+  tft.drawFastHLine(8, 267, 217, TFT_DARKGREY);  // scaled: 5*1.5=8, 200*(4/3)=267, 145*1.5=217
 
 // --- 3. SEKCE: Měsíční fáze s SPRÁVNOU GRAFIKOU ---
   struct tm ti;
@@ -2811,17 +2822,19 @@ void drawWeatherSection() {
     
     tft.setTextColor(txt, bg);
     tft.setFreeFont(NULL);
-    tft.drawString("Moon Phase:", 5, 210);
+    tft.setTextSize(1.5);
+    tft.drawString("Moon Phase:", 8, 280);  // scaled: 5*1.5=8, 210*(4/3)=280
 
     String phaseNames[] = {"New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"};
     if (phase >= 0 && phase <= 7) {
-      tft.drawString(phaseNames[phase], 5, 222);
+      tft.drawString(phaseNames[phase], 8, 296);  // scaled: 5*1.5=8, 222*(4/3)=296
     }
+    tft.setTextSize(1);
 
-    // Volání správné funkce pro kreslení měsíční fáze
-    int mx = 120;       // X pozice měsíce
-    int my = 222;       // Y pozice měsíce
-    int r = 13;         // Radius měsíce
+    // Scaled moon icon position and radius
+    int mx = 180;       // scaled: 120*1.5=180
+    int my = 296;       // scaled: 222*(4/3)=296
+    int r = 17;         // scaled: 13*(4/3)=17
     
     drawMoonPhaseIcon(mx, my, r, phase, txt, bg);
     
@@ -3750,17 +3763,16 @@ void loop() {
 
     switch (currentState) {
       case CLOCK: {
-        // Tlačítko nastavení (Settings)
-        if (x >= 270 && x <= 320 && y >= 200 && y <= 240) {
+        // Settings button touch area (scaled: x=270*1.5=405..320*1.5=480, y=200*(4/3)=267..240*(4/3)=320)
+        if (x >= 405 && x <= 480 && y >= 267 && y <= 320) {
           currentState = SETTINGS;
           menuOffset = 0;
           drawSettingsScreen();
         }
         
-        // PŘIDÁNO: Dotyk na hodiny pro změnu formátu 12/24h (JEN V DIGITÁLNÍM REŽIMU)
-        // Oblast hodin cca x: 180-280, y: 40-130 (dle clockX, clockY a radius)
-        // clockX = 230, clockY = 85, radius = 67
-        if (isDigitalClock && x >= 160 && x <= 300 && y >= 20 && y <= 150) {
+        // Clock face tap area for 12/24h toggle (scaled: x=160*1.5=240..300*1.5=450, y=20*(4/3)=27..150*(4/3)=200)
+        // clockX=345, clockY=113, radius=89
+        if (isDigitalClock && x >= 240 && x <= 450 && y >= 27 && y <= 200) {
            is12hFormat = !is12hFormat;
            prefs.begin("sys", false); prefs.putBool("12hFmt", is12hFormat); prefs.end();
            // Vynutit překreslení vymazáním lastSec
