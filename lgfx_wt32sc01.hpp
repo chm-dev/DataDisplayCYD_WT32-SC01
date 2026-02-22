@@ -48,7 +48,7 @@ public:
       cfg.offset_x = 0;
       cfg.offset_y = 0;
 
-      cfg.offset_rotation = 0;
+      cfg.offset_rotation = 2;
 
       // Set to true if colors are inverted
       cfg.rgb_order = false;
