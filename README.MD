@@ -1,5 +1,7 @@
 ## Port of [DataDisplayV1](https://github.com/lachimalaif/DataDisplay-V1-instalator) for [WT32-SC01](https://en.wireless-tag.com/product-item-25.html)
 
+Ported version: 1.4.
+
 Use Arduino IDE to flash. Set board to ESO32 Wrover Module.
 
 If you run into sketch size error change Partition Scheme in Arduino IDE:
@@ -22,3 +24,4 @@ cfg.offset_rotation = 0;
 ```
 
 change to 2 for 180 rotation.
+
