@@ -1,14 +1,21 @@
-## Port of [DataDisplayV1](https://github.com/lachimalaif/DataDisplay-V1-instalator) for [WT32-SC01](https://en.wireless-tag.com/product-item-25.html)
+# Port of [DataDisplayV1](https://github.com/lachimalaif/DataDisplay-V1-instalator) for [WT32-SC01](https://en.wireless-tag.com/product-item-25.html)
 
 Ported version: 1.4.
 
-Use Arduino IDE to flash. Set board to ESO32 Wrover Module.
+Only "clock view" was scaled to 480x320. Settings, etc remain at 320x240 so will display only on portion of the screen. 
+Still, I was able to setup wifi without a stylus :)
+
+I haven't removed firmware update detection and logic from the project. So don't update OTA as it will break everything, obviously.
+
+## How to install
+
+Use Arduino IDE to flash. Set board to ESP32 Wrover Module.
 
 If you run into sketch size error change Partition Scheme in Arduino IDE:
 
 Tools → Partition Scheme → "Huge APP (3MB No OTA/1MB SPIFFS)"
 
-If you are looking for stand to 3d print for this project I found these two:
+If you are looking for a stand to 3d print for this project I found these two:
 
 https://www.printables.com/model/442876-wt32-sc01-dev-board-enclosure-with-standbatterycha
 
@@ -24,4 +31,5 @@ cfg.offset_rotation = 0;
 ```
 
 change to 2 for 180 rotation.
+
 
