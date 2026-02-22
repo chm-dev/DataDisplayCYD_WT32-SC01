@@ -15,6 +15,8 @@ If you run into sketch size error change Partition Scheme in Arduino IDE:
 
 Tools → Partition Scheme → "Huge APP (3MB No OTA/1MB SPIFFS)"
 
+## Stand 
+
 If you are looking for a stand to 3d print for this project I found these two:
 
 https://www.printables.com/model/442876-wt32-sc01-dev-board-enclosure-with-standbatterycha
@@ -31,5 +33,6 @@ cfg.offset_rotation = 0;
 ```
 
 change to 2 for 180 rotation.
+
 
 
