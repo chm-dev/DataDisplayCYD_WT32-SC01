@@ -1,6 +1,7 @@
 # Port of [DataDisplayV1](https://github.com/lachimalaif/DataDisplay-V1-instalator) for [WT32-SC01](https://en.wireless-tag.com/product-item-25.html)
 
-Ported version: 1.4.
+Ported version: <del>1.3</del> <del>1.4</del> 1.4.1
+
 
 Only "clock view" was scaled to 480x320. Settings, etc remain at 320x240 so will display only on portion of the screen. 
 Still, I was able to setup wifi without a stylus :)
@@ -33,6 +34,7 @@ cfg.offset_rotation = 0;
 ```
 
 change to 2 for 180 rotation.
+
 
 
 
